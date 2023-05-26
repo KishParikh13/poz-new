@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import heroImage from '../assets/hero-journaling.svg';
 
@@ -21,6 +21,16 @@ export function SignInOrUp (props) {
         } else {
             console.log("Sign In Succesful");
             window.location.href = `/home`
+        }
+    }
+
+    const isUserLoggedIn = async () => {
+        const { data, error } = await supabase.auth.getSession()
+        if (data) {
+            console.log("LoggedIn", data);
+            window.location.href = `/home`
+        } else {
+            console.log("NotLoggedIn", error)
         }
     }
 
@@ -52,6 +62,10 @@ export function SignInOrUp (props) {
             window.location.href = `/home`
         }
     }
+
+    useEffect(() => {
+        isUserLoggedIn()
+    }, []);
 
     return (
         <section className='grid grid-cols-2 min-h-screen'>
