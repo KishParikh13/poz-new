@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import Navigation from './Nav';
 import { Link } from "react-router-dom";
-import { ArchiveBoxIcon, ArrowLeftIcon, CogIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid'
+import { ArchiveBoxIcon, ArrowLeftIcon } from '@heroicons/react/24/solid'
 import { supabase } from '../supabaseClient';
 import { useParams } from "react-router-dom";
 import Loading from './Loading';
+import Layout from './Layout';
 
 let emojiOptions = ["🫥", "🙃", "😂", "😝", "😁", "😱", "🙌", "🍻", "🔥", "🌈", "🎈", "🌹", "💄", "🎀", "⚽", "🎾", "🏁", "😡", "👿", "🐻", "🐶", "🐬", "🐟", "🚗", "🍎", "💝", "💙", "👌", "❤", "😍", "😉", "😓", "😳", "💪", "💩", "🍸", "🔑", "💖", "🌟", "🎉", "🌺", "🎶", "👠", "🏈", "⚾", "🏆", "👽", "💀", "💣", "👃", "👂", "🍓", "💘", "💜", "👊", "💋", "😘", "😜", "😵", "🙏", "👋", "🚽", "💃", "💎", "🚀", "🌙", "🎁", "⛄", "🌊", "⛵", "🏀", "🎱", "💰", "👶", "👸", "🐰", "🐷", "🐍", "🐫", "🔫", "👄", "🚲", "🍉", "💛", "💚"]
 
@@ -13,6 +14,21 @@ function Note(props) {
     const [note, setNote] = useState({});
     const { id } = useParams();
     const [loading, setLoading] = useState(true);
+
+    async function getSession () {
+        const { data, error } = await supabase.auth.getSession()
+        if (error) {
+            console.log("getSessionError", error);
+            window.location.href = `/`
+        }
+        else {
+            if (data.session) {
+                console.log("loggedIn", data);
+            } else {
+                window.location.href = `/`
+            }
+        }
+    }
 
     async function getNoteById() {
         const { data, error } = await supabase
@@ -57,15 +73,16 @@ function Note(props) {
     }
 
     useEffect(() => {
+        getSession();
         getNoteById();
     }, []);
 
     return (
-        <>
+        <Layout>
             <Navigation
                 title={`Note #${id}`}
                 leftItem={
-                    <Link to="/">
+                    <Link to="/home">
                         <ArrowLeftIcon className="h-6 w-6" />
                     </Link>
                 }
@@ -119,7 +136,7 @@ function Note(props) {
                     Last updated: {new Date(note.updated_at).toLocaleDateString('en-us', { weekday: "long", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                 </p>
             </div>
-        </>
+        </Layout>
     );
 }
 

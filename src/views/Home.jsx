@@ -3,12 +3,13 @@ import Navigation from './Nav';
 import { Link } from "react-router-dom";
 import { CogIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid'
 import { supabase } from '../supabaseClient';
-import Loading from './Loading';
+import Layout from './Layout';
 
 function Home(props) {
 
     const [notes, setNotes] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [user, setUser] = useState({});
 
     async function getNotes() {
         const { data, error } = await supabase
@@ -19,7 +20,6 @@ function Home(props) {
 
         if (error) console.log("getNotesError", error);
         else {
-            console.log("getNotes", data);
             setNotes(data);
         }
     }
@@ -35,12 +35,40 @@ function Home(props) {
         else window.location.href = `/notes/${notes.length + 1}`
     }
 
+    async function getUserById(id) {
+        const { data, error } = await supabase
+            .from("Users")
+            .select()
+            .eq('id', id)
+        if (error) {
+            console.log("getUserByIdError", error);
+        } else {
+            setUser(data[0]);
+        }
+    }
+
+    async function getSession() {
+        const { data, error } = await supabase.auth.getSession()
+        if (error) {
+            console.log("getSessionError", error);
+            window.location.href = `/`
+        }
+        else {
+            if (data.session) {
+                getUserById(data.session.user.id)
+            } else {
+                window.location.href = `/`
+            }
+        }
+    }
+
     useEffect(() => {
         getNotes();
+        getSession();
     }, []);
 
     return (
-        <>
+        <Layout>
             <Navigation
                 title="Journal"
                 leftItem={
@@ -52,51 +80,57 @@ function Home(props) {
                     </div>
                 }
                 rightItem={
-                    <button type="button" onClick={e => console.log()}>
+                    <Link to="/settings">
                         <CogIcon className="h-6 w-6" />
-                    </button>
+                    </Link>
                 }
             />
-            <div className='flex flex-col gap-4 relative'>
-                <Loading loading={notes.length === 0} className="top-20" />
+            {
+                notes.length > 0 &&
+                <div className='flex flex-col gap-4 relative'>
 
-                <button onClick={e => createNote()}>
-                    <div className='hover:bg-black hover:bg-opacity-5 transition-colors duration-100 text-gray-500 p-4 rounded-md border-dashed border-2  border-black border-opacity-20'>
-                        <h2 className='text-xl'>
-                            <span className='text-2xl mr-2'></span>
-                            + Create
-                        </h2>
-                        <p className='text-gray-500'></p>
-                    </div>
-                </button>
-                {
-                    notes.filter((note) => {
-                        const noteName = note.title.toLowerCase() + note.content.toLowerCase() + note.emoji.toLowerCase();
-                        return noteName.includes(searchQuery);
-                    }).map((note, key) => (
-                        <Link key={key} to={`/notes/${note.id}`}>
-                            <div className='hover:bg-opacity-10 transition-colors duration-100 bg-black bg-opacity-5 text-black p-4 rounded-md shadow-md'>
-                                <div className='flex justify-between items-start'>
-                                    <h2 className='text-xl font-bold'>
-                                        <span className='text-2xl mr-2'>{note.emoji}</span>
-                                        {note.title}
-                                    </h2>
+                    {
+                        user &&
+                        <p className='text-lg font-bold'>Welcome back, {user.first_name}</p>
+                    }
+                    <button onClick={e => createNote()}>
+                        <div className='hover:bg-black hover:bg-opacity-5 transition-colors duration-100 text-gray-500 p-4 rounded-md border-dashed border-2  border-black border-opacity-20'>
+                            <h2 className='text-xl'>
+                                <span className='text-2xl mr-2'></span>
+                                + Create
+                            </h2>
+                            <p className='text-gray-500'></p>
+                        </div>
+                    </button>
+                    {
+                        notes.filter((note) => {
+                            const noteName = note.title.toLowerCase() + note.content.toLowerCase() + note.emoji.toLowerCase();
+                            return noteName.includes(searchQuery);
+                        }).map((note, key) => (
+                            <Link key={key} to={`/notes/${note.id}`}>
+                                <div className='hover:bg-opacity-10 transition-colors duration-100 bg-black bg-opacity-5 text-black p-4 rounded-md shadow-md'>
+                                    <div className='flex justify-between items-start'>
+                                        <h2 className='text-xl font-bold'>
+                                            <span className='text-2xl mr-2'>{note.emoji}</span>
+                                            {note.title}
+                                        </h2>
 
-                                    <p className='text-gray-600  text-sm'>
-                                        {new Date(note.updated_at).toLocaleDateString('en-us', { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                                    </p>
+                                        <p className='text-gray-600  text-sm'>
+                                            {new Date(note.updated_at).toLocaleDateString('en-us', { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                                        </p>
+                                    </div>
+
+                                    {
+                                        note.content.length > 0 &&
+                                        <p className='text-gray-500 mt-2'>{note.content}</p>
+                                    }
                                 </div>
-
-                                {
-                                    note.content.length > 0 &&
-                                    <p className='text-gray-500 mt-2'>{note.content}</p>
-                                }
-                            </div>
-                        </Link>
-                    ))
-                }
-            </div>
-        </>
+                            </Link>
+                        ))
+                    }
+                </div>
+            }
+        </Layout>
     );
 }
 
