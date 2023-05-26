@@ -26,7 +26,7 @@ export function SignInOrUp (props) {
 
     const isUserLoggedIn = async () => {
         const { data, error } = await supabase.auth.getSession()
-        if (data) {
+        if (data.session) {
             console.log("LoggedIn", data);
             window.location.href = `/home`
         } else {
