@@ -107,25 +107,33 @@ function Home(props) {
                             const noteName = note.title.toLowerCase() + note.content.toLowerCase() + note.emoji.toLowerCase();
                             return noteName.includes(searchQuery);
                         }).map((note, key) => (
-                            <Link key={key} to={`/notes/${note.id}`}>
-                                <div className='hover:bg-opacity-10 transition-colors duration-100 bg-black bg-opacity-5 text-black p-4 rounded-md shadow-md'>
-                                    <div className='flex justify-between items-start'>
-                                        <h2 className='text-xl font-bold'>
-                                            <span className='text-2xl mr-2'>{note.emoji}</span>
-                                            {note.title}
-                                        </h2>
+                            <div key={key}>
+                                {
+                                    // only show date if it's different from the previous note
+                                    (key === 0 || new Date(note.updated_at).toLocaleDateString('en-us', { year: "numeric", month: "long", day: "numeric" }) !== new Date(notes[key - 1].updated_at).toLocaleDateString('en-us', { year: "numeric", month: "long", day: "numeric" })) &&
+                                    <p className='text-gray-500 mt-4 mb-2'>{new Date(note.updated_at).toLocaleDateString('en-us', { month: "long", day: "numeric" })}</p>
+                                }
+                                <Link to={`/notes/${note.id}`}>
+                                    <div className='hover:bg-opacity-10 transition-colors duration-100 bg-black bg-opacity-5 text-black p-4 rounded-md shadow-md'>
+                                        <div className='flex justify-between items-start'>
+                                            <h2 className='text-xl font-bold'>
+                                                <span className='text-2xl mr-2'>{note.emoji}</span>
+                                                {note.title}
+                                            </h2>
 
-                                        <p className='text-gray-600  text-sm'>
-                                            {new Date(note.updated_at).toLocaleDateString('en-us', { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                                        </p>
+                                            <p className='text-gray-600  text-sm'>
+                                                {/* display just the time of update */}
+                                                {new Date(note.updated_at).toLocaleTimeString('en-us', { hour: "numeric", minute: "numeric" })}
+                                            </p>
+                                        </div>
+
+                                        {
+                                            note.content.length > 0 &&
+                                            <p className='text-gray-500 mt-2'>{note.content}</p>
+                                        }
                                     </div>
-
-                                    {
-                                        note.content.length > 0 &&
-                                        <p className='text-gray-500 mt-2'>{note.content}</p>
-                                    }
-                                </div>
-                            </Link>
+                                </Link>
+                            </div>
                         ))
                     }
                 </div>
